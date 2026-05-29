@@ -1,6 +1,6 @@
-# StudyVault 学习资料管理器
+# StudyResourcesManager 学习资料管理器
 
-StudyVault 是一个使用 Python 编写的命令行学习资料管理工具。当前第一版主要用于记录、查询、整理和统计个人学习资料，适合作为 Python 基础语法、文件读写、JSON 数据保存和 Git 项目管理的练习项目。
+StudyResourcesManager 是一个使用 Python 编写的命令行学习资料管理工具。当前第一版主要用于记录、查询、整理和统计个人学习资料，适合作为 Python 基础语法、文件读写、JSON 数据保存和 Git 项目管理的练习项目。
 
 程序的数据保存在 `data/resources.json` 中。用户通过终端菜单进行操作，关闭程序后，已经保存的学习资料仍会保留。
 
