@@ -1,25 +1,54 @@
-from collections import Counter
-
+﻿from collections import Counter
+import uuid
+from datetime import datetime
 from app.storage import load_resources, save_resources
+from tkinter import dialog, filedialog
+from pathlib import Path
+import shutil
+import os
+import tkinter as tk
+from tkinter import ttk
+from app.functions import refresh_treeview
 
+FILE_STORAGE_PATH =Path("files")
 
-def add_resources():
-    name=input("请输入资料名称：")
-    subject=input("请输入科目：")
-    file_path=input("请输入路径：")
-    tag = input("请输入标签，多个标签用英文逗号分隔：").split(",")
+def add_resources(tree):
+    file_path=filedialog.askopenfilename(title="请选择文件！")
+    src_path=Path(file_path)
+    destination=filedialog.askdirectory(title="请选择文件转存地址！",initialdir=str(FILE_STORAGE_PATH))
+    des_path=Path(destination)
+    
+    subject=src_path.name
+    parent=src_path.parent
+    suffix=src_path.suffix
+    stem=src_path.stem
 
+    index=1
+
+    try:
+        shutil.copy2(src_path,des_path)
+
+    except Exception as e:
+        tk.messagebox.showerror(title="添加失败",message=f"无法添加文件！\n错误信息：{e}")
+
+    file_id=str(uuid.uuid4())
+    
     p={
-        'name':name,
+        'id':file_id,
         'subject':subject,
-        'path':file_path,
-        'tag':tag
+        ##'tags':tags,
+        'title':src_path.stem,
+        'original_name':src_path.name,
+        'original_path':str(src_path),
+        'create_time':datetime.now().isoformat(timespec="seconds"),
+        "updated_at": datetime.now().isoformat(timespec="seconds")
         }
+
 
     resources=load_resources()
     resources.append(p)
     save_resources(resources)
-
+    refresh_treeview(tree)
     print("资料添加成功！")
 
 
@@ -35,30 +64,38 @@ def select_resources():
                     print(resource)
             break
 
+##删除资源，删除后会在数据库中删除对应项，并且删除文件
+def delete_resources(tree):
+    file_path=filedialog.askopenfilename(title="请选择删除的文件！",initialdir=str(FILE_STORAGE_PATH))
+    src_path=Path(file_path)
+    tep=src_path.stem
+    ##跳出确认框
+    if src_path.exists():
+        confirm=tk.messagebox.askyesno(title="确认删除",message=f"你确定要删除{src_path.name}吗？")
+        if not confirm:
+            return
+        elif confirm:
+            print("正在删除文件...")
+            ##遍历数据库，在数据库中删除对应项
+            resources=load_resources()
+            for resource in resources:
+                if resource['title']==tep:
+                    resources.remove(resource)
+                    print("该文件已删除！")
+            ##删除文件
+            try:
+                os.unlink(src_path)
+            except PermissionError as e:
+                tk.messagebox.showerror(title="删除失败",message=f"无法删除文件！请检查文件是否被占用或权限设置！\n错误信息：{e}")  
+    save_resources(resources)
+    refresh_treeview(tree) 
+    
 
-def delete_resources():
-    tep=input("请输入删除文件名字：")
+
+def print_all_resources(tree):
     resources=load_resources()
     for resource in resources:
-        if resource['name']==tep:
-            flag=input(f"{resource}\n确认删除该文件吗（YES/NO）:")
-            if flag=='YES':
-                resources.remove(resource)
-                print("该文件已删除！")
-            elif flag=='NO':
-                print("未删除该文件")
-                continue
-    save_resources(resources)
-
-
-def print_all_reources():
-    resources=load_resources()
-    if resources!=[]:
-        for index,resource in enumerate(resources,start=1):
-            print(f"{index}.{resource}\n")
-    else:
-        print("目前没有资料存入")
-
+        tree.insert("", tk.END, values=(resource["title"], resource["subject"], resource["original_path"]))
 
 def select_from_tags():
     resources=load_resources()
